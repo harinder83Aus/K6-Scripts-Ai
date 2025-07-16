@@ -1,0 +1,1100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>K6 Distributed Load Testing Guide</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 30px 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .nav {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .nav ul {
+            list-style: none;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .nav a {
+            color: #667eea;
+            text-decoration: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .nav a:hover {
+            background: #667eea;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .section {
+            margin-bottom: 40px;
+            padding: 30px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            border-left: 5px solid #667eea;
+        }
+
+        .section h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+            position: relative;
+            padding-bottom: 10px;
+        }
+
+        .section h2::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 50px;
+            height: 3px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            border-radius: 2px;
+        }
+
+        .section h3 {
+            color: #495057;
+            margin-bottom: 15px;
+            margin-top: 25px;
+            font-size: 1.3em;
+        }
+
+        .section h4 {
+            color: #6c757d;
+            margin-bottom: 10px;
+            margin-top: 20px;
+            font-size: 1.1em;
+        }
+
+        .code-block {
+            background: #1a1a1a;
+            color: #f8f8f2;
+            padding: 20px;
+            border-radius: 10px;
+            overflow-x: auto;
+            margin: 15px 0;
+            border: 1px solid #333;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .code-block pre {
+            margin: 0;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 0.9em;
+            line-height: 1.4;
+        }
+
+        .code-block .comment {
+            color: #6272a4;
+        }
+
+        .code-block .keyword {
+            color: #ff79c6;
+        }
+
+        .code-block .string {
+            color: #f1fa8c;
+        }
+
+        .code-block .number {
+            color: #bd93f9;
+        }
+
+        .highlight {
+            background: linear-gradient(120deg, #a8edea 0%, #fed6e3 100%);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 15px 0;
+            border-left: 4px solid #667eea;
+        }
+
+        .highlight h4 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .benefits {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin: 20px 0;
+        }
+
+        .benefits h3 {
+            color: white;
+            margin-bottom: 15px;
+        }
+
+        .benefits ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .benefits li {
+            padding: 8px 0;
+            position: relative;
+            padding-left: 25px;
+        }
+
+        .benefits li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: #a8edea;
+            font-weight: bold;
+        }
+
+        .warning {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border-left: 4px solid #f39c12;
+        }
+
+        .warning h4 {
+            color: #856404;
+            margin-bottom: 10px;
+        }
+
+        .info {
+            background: #d1ecf1;
+            border: 1px solid #b8daff;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border-left: 4px solid #17a2b8;
+        }
+
+        .info h4 {
+            color: #0c5460;
+            margin-bottom: 10px;
+        }
+
+        .step {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 15px 0;
+            border-left: 4px solid #28a745;
+        }
+
+        .step h4 {
+            color: #28a745;
+            margin-bottom: 10px;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 30px;
+            background: #343a40;
+            color: white;
+            border-radius: 15px;
+            margin-top: 40px;
+        }
+
+        .architecture {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .architecture h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+
+        .flow {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+
+        .flow-item {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            margin: 10px;
+            min-width: 150px;
+            text-align: center;
+        }
+
+        .flow-item h4 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+                margin: 10px;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .nav ul {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .section {
+                padding: 20px;
+            }
+            
+            .flow {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>K6 Distributed Load Testing Guide</h1>
+            <p>Complete setup for running distributed K6 load tests with live metrics to Grafana/Prometheus</p>
+        </div>
+
+        <nav class="nav">
+            <ul>
+                <li><a href="#architecture">Architecture</a></li>
+                <li><a href="#installation">Installation</a></li>
+                <li><a href="#configuration">Configuration</a></li>
+                <li><a href="#deployment">Deployment</a></li>
+                <li><a href="#monitoring">Monitoring</a></li>
+                <li><a href="#optimization">Optimization</a></li>
+            </ul>
+        </nav>
+
+        <div class="section" id="architecture">
+            <h2>Architecture Overview</h2>
+            <div class="architecture">
+                <h3>Distributed Load Testing Components</h3>
+                <div class="flow">
+                    <div class="flow-item">
+                        <h4>Load Generators</h4>
+                        <p>Multiple K6 instances</p>
+                    </div>
+                    <div class="flow-item">
+                        <h4>Prometheus</h4>
+                        <p>Metrics collection</p>
+                    </div>
+                    <div class="flow-item">
+                        <h4>Grafana</h4>
+                        <p>Visualization</p>
+                    </div>
+                    <div class="flow-item">
+                        <h4>Target System</h4>
+                        <p>Application under test</p>
+                    </div>
+                </div>
+            </div>
+            
+            <p>You'll need:</p>
+            <ul>
+                <li><strong>K6 Cloud/Enterprise</strong> (easiest) OR <strong>Custom distributed setup</strong></li>
+                <li><strong>Prometheus</strong> to collect metrics</li>
+                <li><strong>Grafana</strong> for visualization</li>
+                <li><strong>Multiple load generators</strong> (VMs/containers)</li>
+            </ul>
+        </div>
+
+        <div class="section" id="installation">
+            <h2>K6 Installation on Load Generators</h2>
+
+            <h3>Option 1: Binary Installation (Recommended)</h3>
+            <div class="code-block">
+                <pre><code><span class="comment"># Download and install K6 binary</span>
+curl https://github.com/grafana/k6/releases/download/v0.47.0/k6-v0.47.0-linux-amd64.tar.gz -L | tar xvz --strip-components 1
+sudo mv k6 /usr/local/bin/
+
+<span class="comment"># Verify installation</span>
+k6 version</code></pre>
+            </div>
+
+            <h3>Option 2: Package Manager Installation</h3>
+            <div class="code-block">
+                <pre><code><span class="comment"># Ubuntu/Debian</span>
+sudo gpg -k
+sudo gpg --no-default-keyring --keyring /usr/share/keyrings/k6-archive-keyring.gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
+echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
+sudo apt-get update
+sudo apt-get install k6
+
+<span class="comment"># CentOS/RHEL</span>
+sudo dnf install https://dl.k6.io/rpm/repo.rpm
+sudo dnf install k6</code></pre>
+            </div>
+
+            <h3>Option 3: Docker (Alternative)</h3>
+            <div class="code-block">
+                <pre><code><span class="comment"># Pull K6 Docker image</span>
+docker pull grafana/k6:latest
+
+<span class="comment"># Create wrapper script</span>
+cat > /usr/local/bin/k6 << 'EOF'
+#!/bin/bash
+docker run --rm -i --network host \
+  -v $(pwd):/scripts \
+  -e K6_PROMETHEUS_RW_SERVER_URL \
+  -e LOAD_GEN_ID \
+  grafana/k6:latest "$@"
+EOF
+
+chmod +x /usr/local/bin/k6</code></pre>
+            </div>
+        </div>
+
+        <div class="section" id="configuration">
+            <h2>Load Generator Configuration</h2>
+
+            <div class="step">
+                <h4>Step 1: Environment Configuration</h4>
+                <p>Create <code>/etc/k6/config.env</code>:</p>
+                <div class="code-block">
+                    <pre><code><span class="comment"># /etc/k6/config.env</span>
+<span class="comment"># Prometheus remote write endpoint</span>
+K6_PROMETHEUS_RW_SERVER_URL=http://your-prometheus:9090/api/v1/write
+
+<span class="comment"># Unique identifier for this load generator</span>
+LOAD_GEN_ID=loadgen-$(hostname)
+
+<span class="comment"># Optional: Authentication if Prometheus requires it</span>
+K6_PROMETHEUS_RW_USERNAME=k6
+K6_PROMETHEUS_RW_PASSWORD=your-password
+
+<span class="comment"># Optional: Custom metrics server</span>
+K6_PROMETHEUS_RW_PUSH_INTERVAL=5s
+K6_PROMETHEUS_RW_TREND_STATS=p(95),p(99),avg,min,max
+
+<span class="comment"># System tuning</span>
+K6_NO_CONNECTION_REUSE=false
+K6_BATCH_PER_HOST=6
+K6_BATCH_TIMEOUT=60s</code></pre>
+                </div>
+            </div>
+
+            <div class="step">
+                <h4>Step 2: Systemd Service (For Production)</h4>
+                <p>Create <code>/etc/systemd/system/k6-loadgen.service</code>:</p>
+                <div class="code-block">
+                    <pre><code>[Unit]
+Description=K6 Load Generator Service
+After=network.target
+
+[Service]
+Type=simple
+User=k6
+Group=k6
+WorkingDirectory=/opt/k6
+EnvironmentFile=/etc/k6/config.env
+ExecStart=/usr/local/bin/k6 run --out experimental-prometheus-rw --tag instance=%H /opt/k6/scripts/load-test.js
+Restart=on-failure
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target</code></pre>
+                </div>
+            </div>
+
+            <div class="step">
+                <h4>Step 3: System Optimization</h4>
+                <div class="code-block">
+                    <pre><code><span class="comment"># /etc/sysctl.d/99-k6-tuning.conf</span>
+<span class="comment"># Increase file descriptor limits</span>
+fs.file-max = 2097152
+
+<span class="comment"># Network tuning for high connection loads</span>
+net.core.somaxconn = 65535
+net.core.netdev_max_backlog = 5000
+net.core.rmem_default = 262144
+net.core.rmem_max = 16777216
+net.core.wmem_default = 262144
+net.core.wmem_max = 16777216
+
+<span class="comment"># TCP tuning</span>
+net.ipv4.tcp_rmem = 4096 12582912 16777216
+net.ipv4.tcp_wmem = 4096 12582912 16777216
+net.ipv4.tcp_max_syn_backlog = 8096
+net.ipv4.tcp_slow_start_after_idle = 0
+net.ipv4.tcp_tw_reuse = 1
+
+<span class="comment"># Apply settings</span>
+sudo sysctl -p /etc/sysctl.d/99-k6-tuning.conf</code></pre>
+                </div>
+            </div>
+
+            <div class="step">
+                <h4>Step 4: User Limits Configuration</h4>
+                <div class="code-block">
+                    <pre><code><span class="comment"># /etc/security/limits.d/k6.conf</span>
+k6 soft nofile 1000000
+k6 hard nofile 1000000
+k6 soft nproc 1000000
+k6 hard nproc 1000000</code></pre>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Load Generator Directory Structure</h2>
+            <div class="code-block">
+                <pre><code><span class="comment"># Create directory structure</span>
+sudo mkdir -p /opt/k6/{scripts,logs,config}
+sudo useradd -r -s /bin/false k6
+sudo chown -R k6:k6 /opt/k6
+
+<span class="comment"># Directory layout</span>
+/opt/k6/
+├── scripts/
+│   ├── load-test.js
+│   ├── stress-test.js
+│   └── common/
+│       ├── utils.js
+│       └── config.js
+├── logs/
+│   ├── k6.log
+│   └── metrics.log
+└── config/
+    ├── scenarios.json
+    └── thresholds.json</code></pre>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Enhanced Load Generator Script</h2>
+            <div class="code-block">
+                <pre><code><span class="comment">// /opt/k6/scripts/load-test.js</span>
+import { check, sleep } from 'k6';
+import http from 'k6/http';
+import { Counter, Gauge, Rate, Trend } from 'k6/metrics';
+
+<span class="comment">// Custom metrics for better observability</span>
+const customErrors = new Counter('custom_errors');
+const customResponseTime = new Trend('custom_response_time');
+const activeVUs = new Gauge('active_vus');
+
+export let options = {
+  scenarios: {
+    distributed_load: {
+      executor: 'constant-arrival-rate',
+      rate: parseInt(__ENV.TARGET_RPS || '10'),
+      timeUnit: '1s',
+      duration: __ENV.TEST_DURATION || '10m',
+      preAllocatedVUs: parseInt(__ENV.PRE_ALLOCATED_VUS || '10'),
+      maxVUs: parseInt(__ENV.MAX_VUS || '100'),
+    },
+  },
+  
+  <span class="comment">// Thresholds for distributed testing</span>
+  thresholds: {
+    http_req_duration: ['p(95)<500'],
+    http_req_failed: ['rate<0.01'],
+    custom_errors: ['count<100'],
+  },
+  
+  <span class="comment">// Tags for identification</span>
+  tags: {
+    load_generator: __ENV.LOAD_GEN_ID || 'unknown',
+    test_run: __ENV.TEST_RUN_ID || 'default',
+    environment: __ENV.TARGET_ENV || 'test',
+  },
+};
+
+export default function () {
+  const loadGenId = __ENV.LOAD_GEN_ID || 'default';
+  const targetUrl = __ENV.TARGET_URL || 'https://httpbin.org/get';
+  
+  <span class="comment">// Add load generator specific headers</span>
+  const params = {
+    headers: {
+      'X-Load-Generator': loadGenId,
+      'X-Test-Run': __ENV.TEST_RUN_ID || 'default',
+    },
+    tags: {
+      load_generator: loadGenId,
+      endpoint: 'main',
+    },
+  };
+
+  const response = http.get(targetUrl, params);
+
+  const success = check(response, {
+    'status is 200': (r) => r.status === 200,
+    'response time OK': (r) => r.timings.duration < 500,
+    'no server errors': (r) => r.status < 500,
+  });
+
+  if (!success) {
+    customErrors.add(1);
+  }
+
+  customResponseTime.add(response.timings.duration);
+  activeVUs.add(1);
+
+  <span class="comment">// Optional: Dynamic sleep based on load generator</span>
+  const sleepTime = parseFloat(__ENV.SLEEP_DURATION || '1');
+  sleep(sleepTime);
+}
+
+<span class="comment">// Setup function runs once per VU</span>
+export function setup() {
+  console.log(`Load Generator ${__ENV.LOAD_GEN_ID} starting test...`);
+  return { timestamp: Date.now() };
+}
+
+<span class="comment">// Teardown function runs once after all VUs finish</span>
+export function teardown(data) {
+  console.log(`Load Generator ${__ENV.LOAD_GEN_ID} finished test. Duration: ${Date.now() - data.timestamp}ms`);
+}</code></pre>
+            </div>
+        </div>
+
+        <div class="section" id="deployment">
+            <h2>Deployment Script for Multiple Load Generators</h2>
+            <div class="code-block">
+                <pre><code>#!/bin/bash
+<span class="comment"># deploy-distributed-test.sh</span>
+
+<span class="comment"># Configuration</span>
+LOAD_GENERATORS=(
+  "loadgen1.example.com"
+  "loadgen2.example.com"
+  "loadgen3.example.com"
+)
+
+TEST_RUN_ID="test-$(date +%Y%m%d-%H%M%S)"
+TARGET_URL="https://your-api.com/endpoint"
+TEST_DURATION="10m"
+TOTAL_RPS=300
+
+<span class="comment"># Calculate RPS per load generator</span>
+RPS_PER_LG=$((TOTAL_RPS / ${#LOAD_GENERATORS[@]}))
+
+echo "Starting distributed test: $TEST_RUN_ID"
+echo "Total RPS: $TOTAL_RPS, RPS per LG: $RPS_PER_LG"
+
+<span class="comment"># Deploy to each load generator</span>
+for i in "${!LOAD_GENERATORS[@]}"; do
+  lg="${LOAD_GENERATORS[$i]}"
+  lg_id="loadgen-$((i+1))"
+  
+  echo "Deploying to $lg ($lg_id)"
+  
+  <span class="comment"># Copy script and start test</span>
+  scp /opt/k6/scripts/load-test.js k6@$lg:/opt/k6/scripts/
+  
+  ssh k6@$lg "
+    export LOAD_GEN_ID=$lg_id
+    export TEST_RUN_ID=$TEST_RUN_ID
+    export TARGET_URL=$TARGET_URL
+    export TEST_DURATION=$TEST_DURATION
+    export TARGET_RPS=$RPS_PER_LG
+    export MAX_VUS=100
+    export PRE_ALLOCATED_VUS=20
+    
+    source /etc/k6/config.env
+    
+    <span class="comment"># Start test in background</span>
+    nohup k6 run \\
+      --out experimental-prometheus-rw \\
+      --tag instance=$lg \\
+      --tag loadgen_id=$lg_id \\
+      --tag test_run=$TEST_RUN_ID \\
+      /opt/k6/scripts/load-test.js \\
+      > /opt/k6/logs/test-$TEST_RUN_ID.log 2>&1 &
+    
+    echo 'Test started on $lg_id'
+  " &
+done
+
+echo "Waiting for all tests to complete..."
+wait
+
+echo "All distributed tests completed!"</code></pre>
+            </div>
+        </div>
+
+        <div class="section" id="monitoring">
+            <h2>Monitoring Script for Load Generators</h2>
+            <div class="code-block">
+                <pre><code>#!/bin/bash
+<span class="comment"># monitor-load-generators.sh</span>
+
+LOAD_GENERATORS=(
+  "loadgen1.example.com"
+  "loadgen2.example.com"
+  "loadgen3.example.com"
+)
+
+while true; do
+  echo "=== Load Generator Status $(date) ==="
+  
+  for lg in "${LOAD_GENERATORS[@]}"; do
+    echo "--- $lg ---"
+    ssh k6@$lg "
+      echo 'CPU Usage:' \$(top -bn1 | grep 'Cpu(s)' | awk '{print \$2}')
+      echo 'Memory Usage:' \$(free -h | grep Mem | awk '{print \$3\"/\"\$2}')
+      echo 'K6 Processes:' \$(pgrep k6 | wc -l)
+      echo 'Network Connections:' \$(ss -s | grep TCP | head -1)
+      echo 'Recent Log:' \$(tail -1 /opt/k6/logs/*.log 2>/dev/null || echo 'No logs')
+    "
+    echo
+  done
+  
+  sleep 30
+done</code></pre>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Prometheus Configuration</h2>
+            <p>Add to your <code>prometheus.yml</code>:</p>
+            <div class="code-block">
+                <pre><code><span class="comment"># prometheus.yml</span>
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: 'k6'
+    static_configs:
+      - targets: ['localhost:5656']  <span class="comment"># Default K6 metrics port</span>
+    scrape_interval: 5s
+    metrics_path: /metrics
+
+<span class="comment"># If using remote write from K6</span>
+remote_write:
+  - url: "http://your-prometheus:9090/api/v1/write"</code></pre>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Grafana Dashboard Queries</h2>
+            <p>Create a dashboard with these key queries:</p>
+            <div class="code-block">
+                <pre><code><span class="comment"># Request rate</span>
+sum(rate(k6_http_reqs_total[5m])) by (instance)
+
+<span class="comment"># Response time percentiles</span>
+histogram_quantile(0.95, sum(rate(k6_http_req_duration_seconds_bucket[5m])) by (le, instance))
+
+<span class="comment"># Error rate</span>
+sum(rate(k6_http_reqs_total{status!~"2.."}[5m])) by (instance) / sum(rate(k6_http_reqs_total[5m])) by (instance)
+
+<span class="comment"># Active VUs</span>
+sum(k6_vus) by (instance)
+
+<span class="comment"># Data received/sent</span>
+sum(rate(k6_data_received_bytes[5m])) by (instance)
+sum(rate(k6_data_sent_bytes[5m])) by (instance)</code></pre>
+            </div>
+        </div>
+
+        <div class="section" id="optimization">
+            <h2>Key Components Summary</h2>
+            
+            <div class="highlight">
+                <h4>On each Load Generator you need:</h4>
+                <ol>
+                    <li><strong>K6 Binary</strong> - Core load testing engine</li>
+                    <li><strong>Configuration Files</strong> - Environment variables and settings</li>
+                    <li><strong>Test Scripts</strong> - JavaScript files with test scenarios</li>
+                    <li><strong>System Tuning</strong> - Network and resource optimizations</li>
+                    <li><strong>Monitoring</strong> - Logging and metrics collection</li>
+                    <li><strong>Deployment Scripts</strong> - Automation for coordinated testing</li>
+                </ol>
+            </div>
+
+            <div class="info">
+                <h4>Important Note</h4>
+                <p><strong>No additional K6 components needed</strong> - just the single K6 binary handles everything including:</p>
+                <ul>
+                    <li>Test execution</li>
+                    <li>Metrics collection</li>
+                    <li>Prometheus remote write</li>
+                    <li>HTTP client functionality</li>
+                    <li>JavaScript runtime</li>
+                </ul>
+                <p>The beauty of K6 is its simplicity - one binary does it all!</p>
+            </div>
+        </div>
+
+        <div class="benefits">
+            <h3>Key Benefits of This Setup</h3>
+            <ul>
+                <li><strong>Real-time metrics</strong> streaming to Prometheus</li>
+                <li><strong>Distributed load generation</strong> across multiple machines</li>
+                <li><strong>Centralized monitoring</strong> in Grafana</li>
+                <li><strong>Custom metrics</strong> and thresholds</li>
+                <li><strong>Scalable architecture</strong> for large-scale testing</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>Pro Tips</h2>
+            <div class="warning">
+                <h4>Best Practices</h4>
+                <ul>
+                    <li>Use <strong>K6 Cloud</strong> for production-scale testing (handles distribution automatically)</li>
+                    <li>Set up <strong>alerting</strong> in Grafana for threshold breaches</li>
+                    <li>Use <strong>different scenarios</strong> per load generator for varied traffic patterns</li>
+                    <li>Monitor <strong>system resources</strong> on load generators themselves</li>
+                    <li>Consider <strong>geographic distribution</strong> of load generators for realistic testing</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Docker Compose Setup (Alternative)</h2>
+            <p>For local testing and development:</p>
+            <div class="code-block">
+                <pre><code><span class="comment"># docker-compose.yml</span>
+version: '3.8'
+
+services:
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.enable-remote-write-receiver'
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+
+  loadgen1:
+    image: grafana/k6:latest
+    depends_on:
+      - prometheus
+    environment:
+      - K6_PROMETHEUS_RW_SERVER_URL=http://prometheus:9090/api/v1/write
+      - LOAD_GEN_ID=loadgen1
+    volumes:
+      - ./scripts:/scripts
+    command: run --out experimental-prometheus-rw --tag instance=loadgen1 /scripts/load-test.js
+
+  loadgen2:
+    image: grafana/k6:latest
+    depends_on:
+      - prometheus
+    environment:
+      - K6_PROMETHEUS_RW_SERVER_URL=http://prometheus:9090/api/v1/write
+      - LOAD_GEN_ID=loadgen2
+    volumes:
+      - ./scripts:/scripts
+    command: run --out experimental-prometheus-rw --tag instance=loadgen2 /scripts/load-test.js
+
+volumes:
+  prometheus_data:
+  grafana_data:</code></pre>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Advanced Configuration Options</h2>
+            
+            <h3>K6 Cloud Setup (Easiest Option)</h3>
+            <div class="code-block">
+                <pre><code><span class="comment"># Install K6</span>
+curl https://github.com/grafana/k6/releases/download/v0.47.0/k6-v0.47.0-linux-amd64.tar.gz -L | tar xvz --strip-components 1
+
+<span class="comment"># Run distributed test</span>
+k6 cloud --vus 1000 --duration 10m script.js</code></pre>
+            </div>
+
+            <h3>Custom Distributed Setup with Coordinator</h3>
+            <div class="code-block">
+                <pre><code><span class="comment">// coordinator.js</span>
+import { check } from 'k6';
+import http from 'k6/http';
+
+export let options = {
+  scenarios: {
+    ramp_up: {
+      executor: 'ramping-vus',
+      startVUs: 0,
+      stages: [
+        { duration: '2m', target: 100 },
+        { duration: '8m', target: 100 },
+        { duration: '2m', target: 0 },
+      ],
+    },
+  },
+  ext: {
+    prometheus: {
+      mapping: {
+        'http_req_duration': 'histogram',
+        'http_reqs': 'counter',
+        'vus': 'gauge',
+      },
+    },
+  },
+};
+
+export default function () {
+  <span class="comment">// Add unique identifiers for each load generator</span>
+  const loadGenId = __ENV.LOAD_GEN_ID || 'unknown';
+  
+  let response = http.get('https://your-api.com/endpoint', {
+    tags: {
+      load_generator: loadGenId,
+      test_phase: 'main',
+    },
+  });
+  
+  check(response, {
+    'status is 200': (r) => r.status === 200,
+    'response time < 500ms': (r) => r.timings.duration < 500,
+  }, { load_generator: loadGenId });
+}</code></pre>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Troubleshooting Guide</h2>
+            
+            <div class="warning">
+                <h4>Common Issues and Solutions</h4>
+                <ul>
+                    <li><strong>Connection refused to Prometheus:</strong> Check firewall rules and network connectivity</li>
+                    <li><strong>High memory usage:</strong> Reduce VU count or implement proper cleanup in teardown</li>
+                    <li><strong>Test coordination issues:</strong> Use shared storage or message queues for synchronization</li>
+                    <li><strong>Metrics not appearing:</strong> Verify Prometheus remote write URL and authentication</li>
+                </ul>
+            </div>
+
+            <div class="info">
+                <h4>Performance Optimization</h4>
+                <ul>
+                    <li>Monitor system resources on load generators during tests</li>
+                    <li>Use connection pooling and keep-alive settings</li>
+                    <li>Implement proper error handling and retry logic</li>
+                    <li>Consider using different executors for different test patterns</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Security Considerations</h2>
+            
+            <div class="step">
+                <h4>Network Security</h4>
+                <ul>
+                    <li>Use VPN or private networks for load generator communication</li>
+                    <li>Implement proper authentication for Prometheus endpoints</li>
+                    <li>Secure SSH access between coordinator and load generators</li>
+                    <li>Use TLS encryption for metrics transmission</li>
+                </ul>
+            </div>
+
+            <div class="step">
+                <h4>Access Control</h4>
+                <ul>
+                    <li>Create dedicated service accounts for K6 processes</li>
+                    <li>Implement proper file permissions on script directories</li>
+                    <li>Use secrets management for sensitive configuration</li>
+                    <li>Regularly rotate credentials and API keys</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Scaling Considerations</h2>
+            
+            <div class="architecture">
+                <h3>Scaling Strategy</h3>
+                <div class="flow">
+                    <div class="flow-item">
+                        <h4>Horizontal Scaling</h4>
+                        <p>Add more load generators</p>
+                    </div>
+                    <div class="flow-item">
+                        <h4>Vertical Scaling</h4>
+                        <p>Increase VUs per generator</p>
+                    </div>
+                    <div class="flow-item">
+                        <h4>Geographic Distribution</h4>
+                        <p>Multiple regions/zones</p>
+                    </div>
+                    <div class="flow-item">
+                        <h4>Auto-scaling</h4>
+                        <p>Dynamic resource allocation</p>
+                    </div>
+                </div>
+            </div>
+
+            <h3>Resource Planning</h3>
+            <div class="highlight">
+                <h4>Load Generator Sizing Guidelines</h4>
+                <ul>
+                    <li><strong>CPU:</strong> 2-4 cores per 1000 VUs</li>
+                    <li><strong>Memory:</strong> 1-2GB per 1000 VUs</li>
+                    <li><strong>Network:</strong> 1Gbps for high-throughput tests</li>
+                    <li><strong>Storage:</strong> 10GB+ for logs and temporary data</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>This guide provides enterprise-grade distributed load testing with real-time observability using K6, Prometheus, and Grafana.</p>
+            <p><strong>Remember:</strong> The beauty of K6 is its simplicity - one binary handles everything!</p>
+            <p>For support and updates, visit the official K6 documentation at <a href="https://k6.io/docs/" target="_blank" style="color: #a8edea;">k6.io/docs</a></p>
+        </div>
+    </div>
+
+    <script>
+        // Smooth scrolling for navigation links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Add copy functionality to code blocks
+        document.querySelectorAll('.code-block').forEach(block => {
+            const button = document.createElement('button');
+            button.innerHTML = '📋 Copy';
+            button.style.cssText = `
+                position: absolute;
+                top: 10px;
+                right: 10px;
+                background: #667eea;
+                color: white;
+                border: none;
+                padding: 5px 10px;
+                border-radius: 5px;
+                cursor: pointer;
+                font-size: 0.8em;
+                opacity: 0;
+                transition: opacity 0.3s;
+            `;
+            
+            block.style.position = 'relative';
+            block.appendChild(button);
+            
+            block.addEventListener('mouseenter', () => {
+                button.style.opacity = '1';
+            });
+            
+            block.addEventListener('mouseleave', () => {
+                button.style.opacity = '0';
+            });
+            
+            button.addEventListener('click', () => {
+                const code = block.querySelector('code').textContent;
+                navigator.clipboard.writeText(code).then(() => {
+                    button.innerHTML = '✓ Copied!';
+                    setTimeout(() => {
+                        button.innerHTML = '📋 Copy';
+                    }, 2000);
+                });
+            });
+        });
+
+        // Add progress indicator
+        const progressBar = document.createElement('div');
+        progressBar.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 0%;
+            height: 4px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            z-index: 9999;
+            transition: width 0.1s;
+        `;
+        document.body.appendChild(progressBar);
+
+        window.addEventListener('scroll', () => {
+            const scrolled = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight)) * 100;
+            progressBar.style.width = scrolled + '%';
+        });
+    </script>
+</body>
+</html>

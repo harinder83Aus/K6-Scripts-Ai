@@ -1,0 +1,57 @@
+{
+  "name": "odyssey-k6-load-tests",
+  "version": "1.0.0",
+  "description": "K6 load testing suite for Odyssey REST API with comprehensive coverage of all 51 endpoints",
+  "main": "odyssey-k6-test.js",
+  "scripts": {
+    "test": "k6 run odyssey-k6-test.js",
+    "test:smoke": "k6 run --env TEST_SCENARIO=smoke odyssey-k6-test.js",
+    "test:load": "k6 run --env TEST_SCENARIO=load odyssey-k6-test.js",
+    "test:stress": "k6 run --env TEST_SCENARIO=stress odyssey-k6-test.js",
+    "test:spike": "k6 run --env TEST_SCENARIO=spike odyssey-k6-test.js",
+    "test:endurance": "k6 run --env TEST_SCENARIO=endurance odyssey-k6-test.js",
+    "test:messaging": "k6 run --env TEST_SCENARIO=messaging_apis odyssey-k6-test.js",
+    "test:reporting": "k6 run --env TEST_SCENARIO=reporting_apis odyssey-k6-test.js",
+    "test:files": "k6 run --env TEST_SCENARIO=file_management odyssey-k6-test.js",
+    "test:sms": "k6 run --env TEST_CASE=1 odyssey-k6-test.js",
+    "test:email": "k6 run --env TEST_CASE=8 odyssey-k6-test.js",
+    "test:fax": "k6 run --env TEST_CASE=13 odyssey-k6-test.js",
+    "test:voice": "k6 run --env TEST_CASE=17 odyssey-k6-test.js",
+    "test:reports": "k6 run --env TEST_CASE=22 odyssey-k6-test.js",
+    "test:docker": "docker run --rm -v $(pwd):/scripts grafana/k6 run --env AUTH_TOKEN=\"$AUTH_TOKEN\" /scripts/odyssey-k6-test.js",
+    "test:ci": "k6 run --env TEST_SCENARIO=smoke --out json=ci-results.json odyssey-k6-test.js",
+    "validate": "echo 'Validating K6 scripts...' && k6 version && echo 'K6 is ready!'",
+    "docs": "echo 'Documentation files:' && ls -la *.md"
+  },
+  "keywords": [
+    "k6",
+    "load-testing",
+    "performance-testing",
+    "api-testing",
+    "odyssey",
+    "rest-api",
+    "sms",
+    "email",
+    "fax",
+    "voice",
+    "messaging"
+  ],
+  "author": "Load Testing Team",
+  "license": "MIT",
+  "dependencies": {},
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/your-org/odyssey-k6-load-tests.git"
+  },
+  "bugs": {
+    "url": "https://github.com/your-org/odyssey-k6-load-tests/issues"
+  },
+  "homepage": "https://github.com/your-org/odyssey-k6-load-tests#readme",
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "k6": {
+    "version": ">=0.40.0"
+  }
+}
